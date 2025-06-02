@@ -15,10 +15,7 @@ def get_mask_card_number(number_card: List[str]) -> str:
     return mask_card_number
 
 
-card_number_str = "1234567812345678"
-card_number_list = list(card_number_str)
-mask = get_mask_card_number(card_number_list)
-print(mask)
+
 
 
 def get_mask_account(number_cart):
@@ -28,4 +25,4 @@ def get_mask_account(number_cart):
     return f"**{number_mask}"
 
 
-print(get_mask_account("123456"))
+

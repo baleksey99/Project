@@ -19,4 +19,11 @@ print(mask_account_card("Maestro 1596837868705199"))
 print(mask_account_card("Счет 64686473678894779589"))
 
 
+def get_date(info: str) -> str:
+    '''Функция, которая возвращает строку с датой в формате "ДД.ММ.ГГГГ" '''
+    date = f"{info[8:10]}.{info[5:7]}.{info[0:4]}"
+    return date
+
+print(get_date("2024-03-11T02:26:18.671407"))
+
 
