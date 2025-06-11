@@ -8,5 +8,6 @@
 
 1. Клонируйте репозиторий:
 ```
-git clone https://github.com/username/project-x.git
+git clone https://github.com/baleksey99/Project
+
 ```
