@@ -3,9 +3,11 @@ from typing import List
 
 def get_mask_card_number(number_card: List[str]) -> str:
     """Функция, которая принимает номер карты в виде числа и возвращает маску"""
+    if len(number_card) < 16:
+        return ""
     number_card_1 = "".join(number_card)
     number_card_1 = number_card_1.replace(" ", "")
-    mask_card = " ".join(number_card_1[i : i + 4] for i in range(0, len(number_card), 4))
+    mask_card = " ".join(number_card_1[i : i + 4] for i in range(0, len(number_card_1), 4))
     mask_card_list = list(mask_card)
 
     for i in range(len(mask_card_list)):
@@ -17,6 +19,8 @@ def get_mask_card_number(number_card: List[str]) -> str:
 
 def get_mask_account(number_cart):
     """Функция, которая принимает номер счета в виде числа и возвращает маску"""
+    if len(number_cart) < 20:
+        return ""
     number_cart = number_cart.replace(" ", "")
     number_mask = str(number_cart[-4:])
     return f"**{number_mask}"
