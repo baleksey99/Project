@@ -1,5 +1,6 @@
 import pytest
 from src.widget import mask_account_card
+from src.processing import sort_by_date
 
 
 @pytest.fixture
@@ -39,3 +40,14 @@ def list_of_dicts():
         {'state': 'EXECUTED', 'value': 'some_value'},
         {'state': 'PENDING', 'value': 'another_value'}
     ]
+
+
+@pytest.mark.parametrize(
+    "input_list, expected_result",
+    [
+        ([{'date': '2022-01-01'}, {'date': '2021-01-01'}], [{'date': '2021-01-01'}, {'date': '2022-01-01'}]),
+        ([{'date': '2021-01-01'}, {'date': '2022-01-01'}], [{'date': '2022-01-01'}, {'date': '2021-01-01'}]),
+    ]
+)
+def test_sort_by_date(input_list, expected_result):
+    assert sort_by_date(input_list, reverse=True) == expected_result
