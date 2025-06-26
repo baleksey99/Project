@@ -1,5 +1,5 @@
 from src.masks import get_mask_account, get_mask_card_number
-from src.processing import filter_by_state, sort_by_date
+from src.processing import filter_by_state
 from src.widget import get_date
 
 
@@ -22,5 +22,3 @@ def test_get_date(date):
 
 def test_filter_by_state(list_of_dicts, state):
     assert filter_by_state(list_of_dicts, state) == [{'state': 'EXECUTED', 'value': 'some_value'}]
-
-
