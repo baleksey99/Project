@@ -5,6 +5,7 @@ from src.processing import sort_by_date
 from src.widget import mask_account_card
 import pytest
 
+
 def test_get_mask_card_number(numbers):
     assert get_mask_card_number('1234567812345678') == numbers
     assert get_mask_card_number('1234 5678 1234 5678') == numbers
