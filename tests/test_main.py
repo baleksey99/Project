@@ -1,12 +1,12 @@
-from src.masks import get_mask_account, get_mask_card_number
-from src.processing import filter_by_state
-from src.widget import get_date
-from src.processing import sort_by_date
-from src.widget import mask_account_card
-from src.generators import filter_by_currency
-from src.generators import transaction_descriptions
-from src.generators import card_number_generator
+import re
+
 import pytest
+
+from src.generators import (card_number_generator, filter_by_currency,
+                            transaction_descriptions)
+from src.masks import get_mask_account, get_mask_card_number
+from src.processing import filter_by_state, sort_by_date
+from src.widget import get_date, mask_account_card
 
 
 def test_get_mask_card_number(numbers):
@@ -116,6 +116,58 @@ def test_sort_by_date(input_list, reverse, expected_result):
     }], "USD", []),
     ([], "USD", [])
 ])
-
 def test_filter_by_currency(transactions, currency, expected):
     assert list(filter_by_currency(transactions, currency)) == expected
+
+
+@pytest.mark.parametrize('transactions, expected', [
+    ([{
+        "id": "939719570",
+        "state": "EXECUTED",
+        "date": "2018-06-30T02:08:58.425572",
+        "operationAmount": {
+            "amount": "9824.07",
+            "currency": {
+                "name": "USD",
+                "code": "USD"
+            }
+        },
+        "description": "Перевод организации",
+        "from": "Счет 75106830613657916952",
+        "to": "Счет 11776614605963066702"
+    }], ["Перевод организации"]),
+    ([{
+        "id": "939719570",
+        "state": "EXECUTED",
+        "date": "2018-06-30T02:08:58.425572",
+        "operationAmount": {
+            "amount": "9824.07",
+            "currency": {
+                "name": "USD",
+                "code": "USD"
+            }
+        },
+        "description": "Перевод организации",
+        "from": "Счет 75106830613657916952",
+        "to": "Счет 11776614605963066702"
+    }], ["Перевод организации"]),
+    ([], [])
+])
+def test_transaction_descriptions(transactions, expected):
+    assert list(transaction_descriptions(transactions)) == expected
+
+
+@pytest.mark.parametrize("n, start, stop", [
+    (1, 1000, 9999),
+    (5, 2000, 8000),
+    (10, 3000, 7000)
+])
+def test_card_number_generator(n, start, stop):
+    card_gen = card_number_generator(n, start, stop)
+    count = 0
+    for card in card_gen:
+        # Проверка формата
+        assert re.match(r"\d{4} \d{4} \d{4} \d{4}", card)
+        count += 1
+    # Убедись, что генератор выдал ровно n номеров
+    assert count == n
