@@ -3,6 +3,9 @@ from src.processing import filter_by_state
 from src.widget import get_date
 from src.processing import sort_by_date
 from src.widget import mask_account_card
+from src.generators import filter_by_currency
+from src.generators import transaction_descriptions
+from src.generators import card_number_generator
 import pytest
 
 
@@ -62,3 +65,57 @@ def test_mask_account_card(info, expected_result):
 )
 def test_sort_by_date(input_list, reverse, expected_result):
     assert sort_by_date(input_list, reverse=reverse) == expected_result
+
+
+@pytest.mark.parametrize('transactions, currency, expected', [
+    ([{
+        "id": "939719570",
+        "state": "EXECUTED",
+        "date": "2018-06-30T02:08:58.425572",
+        "operationAmount": {
+            "amount": "9824.07",
+            "currency": {
+                "name": "USD",
+                "code": "USD"
+            }
+        },
+        "description": "Перевод организации",
+        "from": "Счет 75106830613657916952",
+        "to": "Счет 11776614605963066702"
+    }], "USD", [
+        {
+            "id": "939719570",
+            "state": "EXECUTED",
+            "date": "2018-06-30T02:08:58.425572",
+            "operationAmount": {
+                "amount": "9824.07",
+                "currency": {
+                    "name": "USD",
+                    "code": "USD"
+                }
+            },
+            "description": "Перевод организации",
+            "from": "Счет 75106830613657916952",
+            "to": "Счет 11776614605963066702"
+        }
+    ]),
+    ([{
+        "id": "939719570",
+        "state": "EXECUTED",
+        "date": "2018-06-30T02:08:58.425572",
+        "operationAmount": {
+            "amount": "9824.07",
+            "currency": {
+                "name": "",
+                "code": ""
+            }
+        },
+        "description": "Перевод организации",
+        "from": "Счет 75106830613657916952",
+        "to": "Счет 11776614605963066702"
+    }], "USD", []),
+    ([], "USD", [])
+])
+
+def test_filter_by_currency(transactions, currency, expected):
+    assert list(filter_by_currency(transactions, currency)) == expected

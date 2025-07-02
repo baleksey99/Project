@@ -27,3 +27,8 @@ def list_of_dicts():
         {'state': 'EXECUTED', 'value': 'some_value'},
         {'state': 'PENDING', 'value': 'another_value'}
     ]
+
+
+@pytest.fixture
+def currency():
+    return "USD"
