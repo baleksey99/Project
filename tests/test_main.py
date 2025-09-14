@@ -3,6 +3,7 @@ from src.processing import filter_by_state
 from src.widget import get_date
 from src.processing import sort_by_date
 from src.widget import mask_account_card
+from src.decorators import log
 import pytest
 
 
@@ -62,3 +63,25 @@ def test_mask_account_card(info, expected_result):
 )
 def test_sort_by_date(input_list, reverse, expected_result):
     assert sort_by_date(input_list, reverse=reverse) == expected_result
+
+
+@log()
+def example_2(a, b):
+    return a + b
+
+
+def test_example_2(capsys):
+    result = example_2(1, 4)
+    assert result == 5
+    captured = capsys.readouterr()
+    assert "example called with args (1, 4) and kwargs {}: result 5" in captured.out
+
+
+@log()
+def example_1(a, b):
+    return a / b
+
+
+def test_example_1():
+    with pytest.raises(ZeroDivisionError, match="division by zero"):
+        example_1(1, 0)

@@ -1,0 +1,64 @@
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+Function wrapper ok
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
+Function wrapper started
+example called with args () and kwargs {}: result None
