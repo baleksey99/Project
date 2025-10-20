@@ -4,7 +4,8 @@ from src.widget import get_date
 from src.processing import sort_by_date
 from src.widget import mask_account_card
 import pytest
-
+from unittest.mock import patch
+from src.external_api import convert_transaction_to_rub
 
 def test_get_mask_card_number(numbers):
     assert get_mask_card_number('1234567812345678') == numbers
@@ -62,3 +63,10 @@ def test_mask_account_card(info, expected_result):
 )
 def test_sort_by_date(input_list, reverse, expected_result):
     assert sort_by_date(input_list, reverse=reverse) == expected_result
+
+
+@patch('amount_cur')
+def test_convert_transaction_to_rub(mock_amount):
+    mock_amount.return_value = 'RUB'
+    assert convert_transaction_to_rub() = 'RUB'
+    mock_amount.assert_called_once_with('EUR', 'USD')
