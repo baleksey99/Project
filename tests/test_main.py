@@ -6,6 +6,12 @@ from src.widget import mask_account_card
 import pytest
 from unittest.mock import patch
 from src.external_api import convert_transaction_to_rub
+from src.utils import filter_transactions_by_currency
+import json
+
+with open('Data/operations.json', 'r', encoding='utf-8') as file:
+    data = json.load(file)
+
 
 def test_get_mask_card_number(numbers):
     assert get_mask_card_number('1234567812345678') == numbers
@@ -65,8 +71,47 @@ def test_sort_by_date(input_list, reverse, expected_result):
     assert sort_by_date(input_list, reverse=reverse) == expected_result
 
 
-@patch('amount_cur')
-def test_convert_transaction_to_rub(mock_amount):
-    mock_amount.return_value = 'RUB'
-    assert convert_transaction_to_rub() = 'RUB'
-    mock_amount.assert_called_once_with('EUR', 'USD')
+@patch('requests.get')
+def test_convert_transaction_to_rub(mock_get):
+    # Настройка мока для requests.get
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {'result': 100.0}
+
+    # Подготовка тестовой транзакции
+    transaction = {
+        "operationAmount": {
+            "currency": {"code": "USD"},
+            "amount": "100"
+        }
+    }
+
+    # Проверка результата
+    result = convert_transaction_to_rub(transaction)
+    assert result == 100.0
+    mock_get.assert_called_once()
+
+
+def test_filter_transactions_by_currency(tmp_path):
+    # Создаем временный JSON файл
+    data = [{
+        "id": 41428829,
+        "state": "EXECUTED",
+        "date": "2019-07-03T18:35:29.512364",
+        "operationAmount": {
+            "amount": "8221.37",
+            "currency": {
+                "name": "USD",
+                "code": "USD"
+            }
+        },
+        "description": "Перевод организации",
+        "from": "MasterCard 7158300734726758",
+        "to": "Счет 35383033474447895560"
+    }]
+    file_path = tmp_path / "transactions.json"
+    with open(file_path, 'w') as f:
+        json.dump(data, f)
+
+    # Запускаем тест
+    result = filter_transactions_by_currency(file_path)
+    assert result == data

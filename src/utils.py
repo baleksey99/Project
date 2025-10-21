@@ -1,5 +1,6 @@
 import json
 
+
 def filter_transactions_by_currency(input_file):
     """Функция, которая принимает на вход путь до JSON-файла и возвращает
     список словарей с данными о финансовых транзакциях"""
