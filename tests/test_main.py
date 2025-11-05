@@ -8,10 +8,10 @@ from unittest.mock import patch
 from src.external_api import convert_transaction_to_rub
 from src.utils import filter_transactions_by_currency
 import json
-from src.main import reading_transactions_csv
+from src.reader import reading_transactions_csv
 import unittest
 from unittest.mock import mock_open
-from src.main import read_from_excel
+from src.reader import read_from_excel
 import pandas as pd
 
 with open('Data/operations.json', 'r', encoding='utf-8') as file:
