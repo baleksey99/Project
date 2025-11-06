@@ -1,9 +1,10 @@
 import os
 
-from src.utils import filter_transactions_by_currency
-from src.reader import read_from_excel, reading_transactions_csv
-from src.processing import filter_by_state, sort_by_date
 from src.bank_search import process_bank_search
+from src.processing import filter_by_state, sort_by_date
+from src.reader import read_from_excel, reading_transactions_csv
+from src.utils import filter_transactions_by_currency
+
 json_path = os.path.join(os.getcwd(), "data", "operations.json")
 csv_path = os.path.join(os.getcwd(), "data", "transactions.csv")
 xlsx_path = os.path.join(os.getcwd(), "data", "transactions_excel.xlsx")
