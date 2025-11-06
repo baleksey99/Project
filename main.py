@@ -1,37 +1,42 @@
 import os
-from src.utils import filter_transactions_by_currency
-from src.reader import reading_transactions_csv, read_transactions_from_excel
-from src.processing import filter_by_state, sort_by_date
-from src.widget import mask_account_card, get_date
-from src.external_api import transaction_amount
-from src.transactions_utils import process_bank_search, process_bank_operations
 
+from src.utils import filter_transactions_by_currency
+from src.reader import read_from_excel, reading_transactions_csv
+from src.processing import filter_by_state, sort_by_date
+from src.bank_search import process_bank_search
 json_path = os.path.join(os.getcwd(), "data", "operations.json")
 csv_path = os.path.join(os.getcwd(), "data", "transactions.csv")
 xlsx_path = os.path.join(os.getcwd(), "data", "transactions_excel.xlsx")
+
+
 def main():
-    print("Программа: Привет! Добро пожаловать в программу работы с банковскими транзакциями.")
+
+    print("Привет! Добро пожаловать в программу работы с банковскими транзакциями.")
     print("Выберите необходимый пункт меню:")
     print("1. Получить информацию о транзакциях из JSON-файла")
     print("2. Получить информацию о транзакциях из CSV-файла")
     print("3. Получить информацию о транзакциях из XLSX-файла")
 
-    # Выбор формата файла
+# Выбор формата файла
     file_format = input()
 
-    if file_format == '1':
-        print("Программа: Для обработки выбран JSON-файл.")
+    if file_format == "1":
+        print("Для обработки выбран JSON-файл.")
         transactions = filter_transactions_by_currency(json_path)
         print(transactions)
-    elif file_format == '2':
-        print("Программа: Для обработки выбран CSV-файл.")
+
+    elif file_format == "2":
+        print("Для обработки выбран CSV-файл.")
         transactions = reading_transactions_csv(csv_path)
-    elif file_format == '3':
-        print("Программа: Для обработки выбран XLSX-файл.")
+        print(transactions)
+
+    elif file_format == "3":
+        print("Для обработки выбран XLSX-файл.")
         transactions = read_from_excel(xlsx_path)
+        print(transactions)
+
     else:
         print("Программа: Неверный формат файла. Завершение работы.")
-        return
 
     # Фильтрация по статусу
     valid_states = ['EXECUTED', 'CANCELED', 'PENDING']
@@ -48,19 +53,22 @@ def main():
     print(filtered_transactions)
     print(f"Программа: Операции отфильтрованы по статусу '{state}'")
 
-
     # Сортировка по дате
     sort_date = input("Программа: Отсортировать операции по дате? Да/Нет\n").strip().lower()
+
     if sort_date in ['да', 'yes']:
         sort_order = input("Программа: Отсортировать по возрастанию или по убыванию?\n").strip().lower()
-        filtered_transactions = sort_by_date(filtered_transactions,
-                                             ascending=(sort_order in ['по возрастанию', 'ascending']))
-    print(filtered_transactions)
-    # Фильтрация по валюте
+        if sort_order == "по возрастанию":
+            if sort_order == "по возрастанию":
+                filtered_transactions = sort_by_date(filtered_transactions, reverse=False)
+            else:
+                filtered_transactions = sort_by_date(filtered_transactions, reverse=True)
+        print(filtered_transactions)
+
     rub_filter = input("Программа: Выводить только рублевые транзакции? Да/Нет\n").strip().lower()
     if rub_filter in ['да', 'yes']:
         filtered_transactions = [tx for tx in transactions
-    if tx.get('operationAmount', {}).get('currency', {}).get('code') == 'RUB']
+                                 if tx.get('operationAmount', {}).get('currency', {}).get('code') == 'RUB']
         print(filtered_transactions)
     # Фильтрация по слову в описании
     word_filter = input(
@@ -69,13 +77,17 @@ def main():
         search_word = input("Программа: Введите слово для поиска:\n").strip().lower()
         filtered_transactions = process_bank_search(filtered_transactions, search_word)
 
-
     # Вывод результата
 
     print("Программа: Распечатываю итоговый список транзакций...")
     print(filtered_transactions)
     if not filtered_transactions:
         print("Программа: Не найдено ни одной транзакции, подходящей под ваши условия фильтрации")
-        return
+    else:
+        print(f"Программа: Всего банковских операций в выборке: {len(filtered_transactions)}")
 
-    print(f"Программа: Всего банковских операций в выборке: {len(filtered_transactions)}")
+    return
+
+
+if __name__ == "__main__":
+    main()

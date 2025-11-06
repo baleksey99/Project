@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import mock_open
 from src.reader import read_from_excel
 import pandas as pd
-
+from src.bank_search import process_bank_search
 with open('Data/operations.json', 'r', encoding='utf-8') as file:
     data = json.load(file)
 
@@ -174,3 +174,17 @@ class TestDataReader(unittest.TestCase):
             ]
 
             self.assertEqual(transactions, expected_transactions)
+
+
+def test_process_bank_search():
+    data = [{'description': 'Перевод на карту'}, {'description': 'Оплата счёта'}]
+    search = 'Перевод'
+    assert process_bank_search(data, search) == [{'description': 'Перевод на карту'}]
+
+    data = [{'description': 'Оплата счёта'}, {'description': 'Пополнение баланса'}]
+    search = 'Перевод'
+    assert process_bank_search(data, search) == []
+
+    data = [{'description': 'перевод на карту'}, {'description': 'Оплата счёта'}]
+    search = 'ПЕРЕВОД'
+    assert process_bank_search(data, search) == [{'description': 'перевод на карту'}]
