@@ -35,3 +35,10 @@ pytest-cov = "^6.2.1"
 line-length = 119
 # Файлы, которые не нужно форматировать
 exclude =".git"          # в корне проекта
+
+[tool.isort]
+profile = "black"
+line_length = 119
+
+[tool.isort.skip]
+skip_gitignore = false

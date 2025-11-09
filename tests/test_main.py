@@ -1,10 +1,12 @@
 import json
 import unittest
+from io import StringIO
 from unittest.mock import mock_open, patch
 
 import pandas as pd
 import pytest
 
+from main import main
 from src.bank_search import process_bank_search
 from src.external_api import convert_transaction_to_rub
 from src.masks import get_mask_account, get_mask_card_number
@@ -187,3 +189,17 @@ def test_process_bank_search():
     data = [{'description': 'перевод на карту'}, {'description': 'Оплата счёта'}]
     search = 'ПЕРЕВОД'
     assert process_bank_search(data, search) == [{'description': 'перевод на карту'}]
+
+
+class TestMainFunction(unittest.TestCase):
+    @patch('builtins.input', side_effect=['1', 'EXECUTED', 'Да', 'по возрастанию', 'Да', 'Нет'])
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_main(self, mock_stdout, mock_input):
+        main()
+        output = mock_stdout.getvalue()
+        self.assertIn("Для обработки выбран JSON-файл.", output)
+        self.assertIn("Операции отфильтрованы по статусу 'EXECUTED'", output)
+
+
+if __name__ == '__main__':
+    unittest.main()
