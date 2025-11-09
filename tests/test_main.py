@@ -1,19 +1,20 @@
-from src.masks import get_mask_account, get_mask_card_number
-from src.processing import filter_by_state
-from src.widget import get_date
-from src.processing import sort_by_date
-from src.widget import mask_account_card
-import pytest
-from unittest.mock import patch
-from src.external_api import convert_transaction_to_rub
-from src.utils import filter_transactions_by_currency
 import json
-from src.reader import reading_transactions_csv
 import unittest
-from unittest.mock import mock_open
-from src.reader import read_from_excel
+from io import StringIO
+from unittest.mock import mock_open, patch
+
 import pandas as pd
+import pytest
+
+from main import main
 from src.bank_search import process_bank_search
+from src.external_api import convert_transaction_to_rub
+from src.masks import get_mask_account, get_mask_card_number
+from src.processing import filter_by_state, sort_by_date
+from src.reader import read_from_excel, reading_transactions_csv
+from src.utils import filter_transactions_by_currency
+from src.widget import get_date, mask_account_card
+
 with open('Data/operations.json', 'r', encoding='utf-8') as file:
     data = json.load(file)
 
@@ -188,3 +189,17 @@ def test_process_bank_search():
     data = [{'description': 'перевод на карту'}, {'description': 'Оплата счёта'}]
     search = 'ПЕРЕВОД'
     assert process_bank_search(data, search) == [{'description': 'перевод на карту'}]
+
+
+class TestMainFunction(unittest.TestCase):
+    @patch('builtins.input', side_effect=['1', 'EXECUTED', 'Да', 'по возрастанию', 'Да', 'Нет'])
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_main(self, mock_stdout, mock_input):
+        main()
+        output = mock_stdout.getvalue()
+        self.assertIn("Для обработки выбран JSON-файл.", output)
+        self.assertIn("Операции отфильтрованы по статусу 'EXECUTED'", output)
+
+
+if __name__ == '__main__':
+    unittest.main()
