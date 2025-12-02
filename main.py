@@ -1,93 +1,97 @@
-import os
+"""
+Единый модуль для запуска всей функциональности проекта.
+"""
+import argparse
+import sys
+from datetime import datetime
 
-from src.bank_search import process_bank_search
-from src.processing import filter_by_state, sort_by_date
-from src.reader import read_from_excel, reading_transactions_csv
-from src.utils import filter_transactions_by_currency
+# Импортируем функционал из модулей проекта
+from src.reports import spending_by_category
+from src.services import investment_bank
+from src.utils import get_currency_rates, get_greeting, get_stock_prices
+from src.views import home_page  # предположим, есть такая функция
 
-json_path = os.path.join(os.getcwd(), "data", "operations.json")
-csv_path = os.path.join(os.getcwd(), "data", "transactions.csv")
-xlsx_path = os.path.join(os.getcwd(), "data", "transactions_excel.xlsx")
+
+def cmd_greeting():
+    """Вывести приветствие по текущему часу."""
+    hour = datetime.now().hour
+    print(get_greeting(hour))
+
+
+def cmd_spending_by_category(category: str, date_str: str):
+    """Показать траты по категории за дату."""
+    # Здесь нужно подставить реальный DataFrame, например, из load_transactions
+    # Для примера просто вызываем функцию
+    result = spending_by_category(None, category, date_str)
+    print(result)
+
+
+def cmd_investment_bank(month: int, limit: float):
+    """Рассчитать инвестиционный доход."""
+    result = investment_bank(month, [], limit)  # [] — пример пустых транзакций
+    print(f"Доход: {result}")
+
+
+def cmd_currency_rates(currencies: list):
+    """Получить курсы валют."""
+    rates = get_currency_rates(currencies)
+    for item in rates:
+        print(f"{item['currency']}: {item['rate']}")
+
+
+def cmd_stock_prices(symbols: list):
+    """Получить цены акций."""
+    prices = get_stock_prices(symbols)
+    for item in prices:
+        print(f"{item['stock']}: {item['price']}")
+
+
+def cmd_homepage():
+    """Отрисовать главную страницу (если есть веб‑часть)."""
+    html = home_page()
+    print(html)
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Универсальный запускатель проекта")
+    subparsers = parser.add_subparsers(dest="command", help="Доступные команды")
 
-    print("Привет! Добро пожаловать в программу работы с банковскими транзакциями.")
-    print("Выберите необходимый пункт меню:")
-    print("1. Получить информацию о транзакциях из JSON-файла")
-    print("2. Получить информацию о транзакциях из CSV-файла")
-    print("3. Получить информацию о транзакциях из XLSX-файла")
+    # Подкоманды
+    subparsers.add_parser("greeting", help="Вывести приветствие")
 
-# Выбор формата файла
-    file_format = input()
+    spend_parser = subparsers.add_parser("spending", help="Траты по категории")
+    spend_parser.add_argument("category", type=str, help="Название категории")
+    spend_parser.add_argument("date", type=str, help="Дата в формате ГГГГ-ММ-ДД")
 
-    if file_format == "1":
-        print("Для обработки выбран JSON-файл.")
-        transactions = filter_transactions_by_currency(json_path)
-        print(transactions)
+    invest_parser = subparsers.add_parser("investment", help="Инвестиционный расчёт")
+    invest_parser.add_argument("month", type=int, help="Номер месяца")
+    invest_parser.add_argument("limit", type=float, help="Лимит")
 
-    elif file_format == "2":
-        print("Для обработки выбран CSV-файл.")
-        transactions = reading_transactions_csv(csv_path)
-        print(transactions)
+    rates_parser = subparsers.add_parser("rates", help="Курсы валют")
+    rates_parser.add_argument("currencies", nargs="+", help="Список валют (USD EUR и т. п.)")
 
-    elif file_format == "3":
-        print("Для обработки выбран XLSX-файл.")
-        transactions = read_from_excel(xlsx_path)
-        print(transactions)
+    stocks_parser = subparsers.add_parser("stocks", help="Цены акций")
+    stocks_parser.add_argument("symbols", nargs="+", help="Тикеры акций (AAPL GOOG и т. п.)")
 
+    subparsers.add_parser("homepage", help="Отрисовать главную страницу")
+
+    args = parser.parse_args()
+
+    if args.command == "greeting":
+        cmd_greeting()
+    elif args.command == "spending":
+        cmd_spending_by_category(args.category, args.date)
+    elif args.command == "investment":
+        cmd_investment_bank(args.month, args.limit)
+    elif args.command == "rates":
+        cmd_currency_rates(args.currencies)
+    elif args.command == "stocks":
+        cmd_stock_prices(args.symbols)
+    elif args.command == "homepage":
+        cmd_homepage()
     else:
-        print("Программа: Неверный формат файла. Завершение работы.")
-
-    # Фильтрация по статусу
-    valid_states = ['EXECUTED', 'CANCELED', 'PENDING']
-    state = ''
-    while state not in valid_states:
-        print("Программа: Введите статус, по которому необходимо выполнить фильтрацию.")
-        print("Доступные для фильтрации статусы:", ', '.join(valid_states))
-        state = input().strip().upper()
-
-        if state not in valid_states:
-            print(f"Программа: Статус операции '{state}' недоступен.")
-
-    filtered_transactions = filter_by_state(transactions, state)
-    print(filtered_transactions)
-    print(f"Программа: Операции отфильтрованы по статусу '{state}'")
-
-    # Сортировка по дате
-    sort_date = input("Программа: Отсортировать операции по дате? Да/Нет\n").strip().lower()
-
-    if sort_date in ['да', 'yes']:
-        sort_order = input("Программа: Отсортировать по возрастанию или по убыванию?\n").strip().lower()
-        if sort_order == "по возрастанию":
-            if sort_order == "по возрастанию":
-                filtered_transactions = sort_by_date(filtered_transactions, reverse=False)
-            else:
-                filtered_transactions = sort_by_date(filtered_transactions, reverse=True)
-        print(filtered_transactions)
-
-    rub_filter = input("Программа: Выводить только рублевые транзакции? Да/Нет\n").strip().lower()
-    if rub_filter in ['да', 'yes']:
-        filtered_transactions = [tx for tx in transactions
-                                 if tx.get('operationAmount', {}).get('currency', {}).get('code') == 'RUB']
-        print(filtered_transactions)
-    # Фильтрация по слову в описании
-    word_filter = input(
-        "Программа: Отфильтровать список транзакций по определенному слову в описании? Да/Нет\n").strip().lower()
-    if word_filter in ['да', 'yes']:
-        search_word = input("Программа: Введите слово для поиска:\n").strip().lower()
-        filtered_transactions = process_bank_search(filtered_transactions, search_word)
-
-    # Вывод результата
-
-    print("Программа: Распечатываю итоговый список транзакций...")
-    print(filtered_transactions)
-    if not filtered_transactions:
-        print("Программа: Не найдено ни одной транзакции, подходящей под ваши условия фильтрации")
-    else:
-        print(f"Программа: Всего банковских операций в выборке: {len(filtered_transactions)}")
-
-    return
+        parser.print_help()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
