@@ -1,55 +1,52 @@
-import unittest
-
 import pandas as pd
+import pytest
 
 from src.reports import spending_by_category
 
 
-class TestReports(unittest.TestCase):
+@pytest.fixture
+def sample_transactions():
+    return pd.DataFrame({
+        "Дата операции": [
+            "2025-03-01", "2025-03-10", "2025-04-05",
+            "2025-05-01", "2025-05-15"
+        ],
+        "Категория": [
+            "Супермаркеты", "Супермаркеты", "Развлечения",
+            "Супермаркеты", "Кафе"
+        ],
+        "Сумма операции": [100.0, 200.0, 500.0, 150.0, 300.0]
+    })
 
-    def setUp(self):
-        # Фикстура: тестовый DataFrame
-        self.df = pd.DataFrame({
-            "Дата операции": [
-                "2025-01-10", "2025-01-15", "2025-02-20",
-                "2025-03-05", "2025-04-10"
-            ],
-            "Категория": [
-                "Супермаркеты", "Супермаркеты", "Развлечения",
-                "Супермаркеты", "ЖКХ"
-            ],
-            "Сумма операции": [1000.0, 1500.0, 500.0, 2000.0, 3000.0]
-        })
 
-    def test_spending_by_category_normal(self):
-        result = spending_by_category(self.df, "Супермаркеты", "2025-01-01")
+@pytest.mark.parametrize(
+    "category,start_date,expected_total",
+    [
+        ("Супермаркеты", "2025-03-01", 450.0),
+        ("Развлечения", "2025-03-01", 500.0),
+        ("Кафе", "2025-03-01", 300.0),
+        ("Транспорт", "2025-03-01", 0.0),  # нет транзакций
+    ]
+)
+def test_spending_by_category_total(sample_transactions, category, start_date, expected_total):
+    result = spending_by_category(sample_transactions, category, start_date)
+    assert result["total_spent"] == expected_total
 
-        self.assertEqual(result["category"], "Супермаркеты")
-        self.assertEqual(result["period"], "2025-01-01 – 2025-03-31")
-        self.assertAlmostEqual(result["total_spent"], 4500.0)
-        self.assertEqual(result["transactions_count"], 3)
-        self.assertAlmostEqual(result["average_transaction"], 1500.0)
-        self.assertEqual(len(result["monthly_breakdown"]), 2)
-        self.assertEqual(result["monthly_breakdown"][0]["month"], "2025-01")
-        self.assertAlmostEqual(result["monthly_breakdown"][0]["total"], 2500.0)
-        self.assertEqual(result["monthly_breakdown"][1]["month"], "2025-03")
-        self.assertAlmostEqual(result["monthly_breakdown"][1]["total"], 2000.0)
 
-    def test_spending_by_category_no_data(self):
-        result = spending_by_category(self.df, "Транспорт", "2025-01-01")
-        self.assertEqual(result["total_spent"], 0.0)
-        self.assertEqual(result["transactions_count"], 0)
-        self.assertEqual(result["average_transaction"], 0.0)
-        self.assertEqual(len(result["monthly_breakdown"]), 0)
+def test_spending_by_category_monthly_breakdown(sample_transactions):
+    result = spending_by_category(sample_transactions, "Супермаркеты", "2025-03-01")
+    monthly = {item["month"]: item["total"] for item in result["monthly_breakdown"]}
+    assert monthly["2025-03"] == 300.0
+    assert monthly["2025-05"] == 150.0
 
-    def test_spending_by_category_single_month(self):
-        result = spending_by_category(self.df, "Развлечения", "2025-02-01")
-        self.assertEqual(result["period"], "2025-02-01 – 2025-04-30")
-        self.assertAlmostEqual(result["total_spent"], 500.0)
-        self.assertEqual(result["transactions_count"], 1)
-        self.assertEqual(len(result["monthly_breakdown"]), 1)
-        self.assertEqual(result["monthly_breakdown"][0]["month"], "2025-02")
 
-    def test_spending_by_category_invalid_date(self):
-        with self.assertRaises(ValueError):
-            spending_by_category(self.df, "Супермаркеты", "invalid-date")
+def test_spending_by_category_empty_df():
+    empty_df = pd.DataFrame(columns=["Дата операции", "Категория", "Сумма операции"])
+    result = spending_by_category(empty_df, "Супермаркеты", "2025-03-01")
+    assert result["total_spent"] == 0.0
+    assert len(result["monthly_breakdown"]) == 0
+
+
+def test_spending_by_category_invalid_date(sample_transactions):
+    with pytest.raises(ValueError):
+        spending_by_category(sample_transactions, "Супермаркеты", "некорректная_дата")

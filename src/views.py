@@ -1,111 +1,80 @@
 import json
-import logging
 from datetime import datetime
 
 import pandas as pd
 
-from src.utils import get_currency_rates, get_greeting, get_stock_prices, load_transactions
-
-logger = logging.getLogger(__name__)
+from src.utils import get_currency_rates, get_stock_prices, load_transactions
 
 
-def home_page(date_str: str) -> str:
+def home_page(current_time_str: str) -> str:
     """
-    Возвращает JSON-ответ для страницы «Главная».
+    Возвращает JSON-строку с данными для главной страницы:
+    - приветствие
+    - карты и траты по ним
+    - курсы валют
+    - цены акций
 
     Args:
-        date_str (str): Дата в формате 'YYYY-MM-DD HH:MM:SS'
+        current_time_str: строка с датой и временем в формате 'ГГГГ-ММ-ДД ЧЧ:ММ:СС'
 
     Returns:
-        str: JSON-строка с данными
+        JSON-строка с данными
     """
-    # Парсинг даты
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-        target_date = dt.date()
-    except ValueError as e:
-        logger.error(f"Некорректный формат даты: {e}")
-        return json.dumps({"error": "Некорректный формат даты"}, ensure_ascii=False, indent=2)
+    # Парсим текущее время
+    current_time = datetime.strptime(current_time_str, '%Y-%m-%d %H:%M:%S')
 
-    # Загрузка транзакций
+    # Загружаем транзакции (с обработкой ошибок)
     try:
-        df = load_transactions("data/operations.xlsx")
+        transactions = load_transactions()
     except Exception as e:
-        logger.error(f"Ошибка загрузки транзакций: {e}")
-        df = pd.DataFrame()
+        print(f"Ошибка загрузки транзакций: {e}")
+        transactions = pd.DataFrame(columns=[
+            "Дата операции", "Номер карты", "Сумма операции", "Категория", "Описание"
+        ])
 
-    # Фильтрация по дате (с начала месяца до target_date)
-    if not df.empty:
-        df["Дата операции"] = pd.to_datetime(df["Дата операции"])
-        mask = (df["Дата операции"].dt.date >= target_date.replace(day=1)) & \
-               (df["Дата операции"].dt.date <= target_date)
-        filtered_df = df[mask]
+    # Загружаем курсы валют и цены акций
+    try:
+        currency_rates = get_currency_rates()
+    except Exception as e:
+        print(f"Ошибка загрузки курсов валют: {e}")
+        currency_rates = []
+
+    try:
+        stock_prices = get_stock_prices()
+    except Exception as e:
+        print(f"Ошибка загрузки цен акций: {e}")
+        stock_prices = []
+
+    # Формируем приветствие
+    hour = current_time.hour
+    if 5 <= hour < 12:
+        greeting = "Доброе утро"
+    elif 12 <= hour < 17:
+        greeting = "Добрый день"
+    elif 17 <= hour < 23:
+        greeting = "Добрый вечер"
     else:
-        filtered_df = pd.DataFrame()
+        greeting = "Доброй ночи"
 
-    # Приветствие
-    greeting = get_greeting(dt.hour)
-
-    # Данные по картам
-    cards_data = []
-    if not filtered_df.empty:
-        for last_digits in filtered_df["Номер карты"].unique():
-            card_transactions = filtered_df[filtered_df["Номер карты"] == last_digits]
-            total_spent = card_transactions["Сумма операции"].sum()
-            cashback = total_spent / 100
-            cards_data.append({
-                "last_digits": str(last_digits),
-                "total_spent": round(total_spent, 2),
-                "cashback": round(cashback, 2)
+    # Агрегируем траты по картам
+    cards = []
+    if not transactions.empty:
+        # Группируем по номеру карты и считаем общую сумму трат
+        card_groups = transactions.groupby("Номер карты")
+        for card_number, group in card_groups:
+            total_spent = group["Сумма операции"].sum()
+            # Берём последние 4 цифры номера карты
+            last_digits = str(card_number)[-4:]
+            cards.append({
+                "last_digits": last_digits,
+                "total_spent": round(total_spent, 2)
             })
 
-    # Топ-5 транзакций по сумме платежа
-    top_transactions = []
-    if not filtered_df.empty:
-        top_transactions = filtered_df.nlargest(5, "Сумма платежа")[[
-            "Дата операции", "Сумма платежа", "Категория", "Описание"
-        ]].to_dict(orient="records")
-        for item in top_transactions:
-            item["date"] = item["Дата операции"].strftime("%d.%m.%Y")
-            item["amount"] = item["Сумма платежа"]
-            item["category"] = item["Категория"]
-            item["description"] = item["Описание"]
-            del item["Дата операции"], item["Сумма платежа"], item["Категория"], item["Описание"]
-
-    # Курсы валют и цены акций (единая обработка настроек)
-    currency_rates = []
-    stock_prices = []
-
-    try:
-        with open("user_settings.json", "r", encoding="utf-8") as f:
-            settings = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logger.error(f"Ошибка чтения user_settings.json: {e}")
-        settings = {"user_currencies": [], "user_stocks": []}
-
-    # Курсы валют
-    if "user_currencies" in settings and settings["user_currencies"]:
-        try:
-            currency_rates = get_currency_rates(settings["user_currencies"])
-        except Exception as e:
-            logger.error(f"Ошибка получения курсов валют: {e}")
-    else:
-        logger.warning("user_currencies не найден или пуст в настройках")
-
-    # Цены акций
-    if "user_stocks" in settings and settings["user_stocks"]:
-        try:
-            stock_prices = get_stock_prices(settings["user_stocks"])
-        except Exception as e:
-            logger.error(f"Ошибка получения цен акций: {e}")
-    else:
-        logger.warning("user_stocks не найден или пуст в настройках")
-
-    # Формирование JSON
+    # Формируем итоговый ответ
     result = {
         "greeting": greeting,
-        "cards": cards_data,
-        "top_transactions": top_transactions,
+        "cards": cards,
+        "top_transactions": transactions.head(5).to_dict('records'),  # Топ-5 транзакций
         "currency_rates": currency_rates,
         "stock_prices": stock_prices
     }

@@ -2,14 +2,15 @@
 Единый модуль для запуска всей функциональности проекта.
 """
 import argparse
+import json
 import sys
 from datetime import datetime
 
 # Импортируем функционал из модулей проекта
 from src.reports import spending_by_category
 from src.services import investment_bank
-from src.utils import get_currency_rates, get_greeting, get_stock_prices
-from src.views import home_page  # предположим, есть такая функция
+from src.utils import get_currency_rates, get_greeting, get_stock_prices, load_transactions
+from src.views import home_page
 
 
 def cmd_greeting():
@@ -20,15 +21,22 @@ def cmd_greeting():
 
 def cmd_spending_by_category(category: str, date_str: str):
     """Показать траты по категории за дату."""
-    # Здесь нужно подставить реальный DataFrame, например, из load_transactions
-    # Для примера просто вызываем функцию
-    result = spending_by_category(None, category, date_str)
-    print(result)
+    try:
+        df = load_transactions("data/operations.xlsx")
+        result = spending_by_category(df, category, date_str)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    except Exception as e:
+        print(f"Ошибка: {e}")
 
 
-def cmd_investment_bank(month: int, limit: float):
+def cmd_investment_bank(month: str, limit: float):
     """Рассчитать инвестиционный доход."""
-    result = investment_bank(month, [], limit)  # [] — пример пустых транзакций
+    # Пример транзакций (в реальном коде загружайте из файла)
+    transactions = [
+        {"Дата операции": "2025-03-15", "Сумма операции": 1712.0},
+        {"Дата операции": "2025-03-20", "Сумма операции": 847.5}
+    ]
+    result = investment_bank(month, transactions, limit)
     print(f"Доход: {result}")
 
 
@@ -47,8 +55,8 @@ def cmd_stock_prices(symbols: list):
 
 
 def cmd_homepage():
-    """Отрисовать главную страницу (если есть веб‑часть)."""
-    html = home_page()
+    """Отрисовать главную страницу."""
+    html = home_page(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     print(html)
 
 
@@ -64,8 +72,8 @@ def main():
     spend_parser.add_argument("date", type=str, help="Дата в формате ГГГГ-ММ-ДД")
 
     invest_parser = subparsers.add_parser("investment", help="Инвестиционный расчёт")
-    invest_parser.add_argument("month", type=int, help="Номер месяца")
-    invest_parser.add_argument("limit", type=float, help="Лимит")
+    invest_parser.add_argument("month", type=str, help="Месяц в формате ГГГГ-ММ")
+    invest_parser.add_argument("limit", type=float, help="Лимит округления (10, 50, 100)")
 
     rates_parser = subparsers.add_parser("rates", help="Курсы валют")
     rates_parser.add_argument("currencies", nargs="+", help="Список валют (USD EUR и т. п.)")
